@@ -27,7 +27,7 @@ def get_chords(web_url):
 
 url = ('https://tabs.ultimate-guitar.com/t/the_weeknd/i_feel_it_coming_ver2_crd.htm')
 result = get_chords(url)
-result
+print(result)
 
 
 # In[ ]:
