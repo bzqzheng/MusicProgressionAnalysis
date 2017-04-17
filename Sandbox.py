@@ -13,7 +13,7 @@ weekend = requests.get('https://www.ultimate-guitar.com/search.php?search_type=t
 weekend_soup = bs4.BeautifulSoup(weekend.content, 'html.parser')
 
 
-# In[344]:
+# In[363]:
 
 def soup_page(web_url):
     req = requests.get(web_url)
@@ -77,6 +77,11 @@ def get_top100(int_year):
         top100Songs += p
     return top100Songs
 
+def get_top100_query(int_year):
+    top100 = get_top100(int_year)
+    result = [pair[1].lower()+' '+pair[0].lower().replace('(','').replace(')','').replace('featuring','').replace('&','') for pair in top100]
+    return result
+
 
 # In[331]:
 
@@ -100,9 +105,9 @@ for row in rows:
             print(get_rating(row),"\t", get_url(row))
 
 
-# In[345]:
+# In[364]:
 
-get_top100(2010)
+get_top100_query(2016)
 
 
 # In[ ]:
