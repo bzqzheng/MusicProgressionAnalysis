@@ -13,8 +13,9 @@ weekend = requests.get('https://www.ultimate-guitar.com/search.php?search_type=t
 weekend_soup = bs4.BeautifulSoup(weekend.content, 'html.parser')
 
 
-# In[363]:
+# In[391]:
 
+# Returns the Beautifulsoup of the input 'web_url'
 def soup_page(web_url):
     req = requests.get(web_url)
     req_soup = bs4.BeautifulSoup(req.content, 'html.parser')
@@ -28,6 +29,7 @@ def get_chords(web_url):
     chords_list = [word.replace('<span>', '').replace('</span>', '') for word in str(content).split() if word[0:6] == '<span>']
     return chords_list
 
+# Returns the rating of a certain row in the ultimate guitar result page
 def get_rating(row):
     temp_rate = row.find('td', {'class':'gray4 tresults--rating'})
     rate_list = temp_rate.find_all('b', {'class':'ratdig'})
@@ -35,23 +37,25 @@ def get_rating(row):
         rate = rate_list[0].text.strip()
         return float(rate)
 
+# Returns the type of a certain row in a result page
 def get_type(row):
     row_type = row.find_all('strong')[0].text.strip()
     return row_type
 
-# -- Puyush's functions --
+# Return the url of a certain row (version) of chords in a result page
 def get_url(row):
     search_version = row.find_all('td',{'class':'search-version--td'})[0]
     href = search_version.find_all('a')[0].attrs['href']
     return href
 
+# -- Puyush's functions --
 def get_bbd_year_url(year_input):
     url = 'http://www.billboard.com/charts/year-end/'
     url += str(year_input)
     url += '/hot-100-songs'
     return url
 
-def update_url(int_year):
+def update_bbd_url(int_year):
     billboard = requests.get(get_bbd_year_url(int_year))
     billboard_soup = bs4.BeautifulSoup(billboard.content, 'html.parser')
     innerContent =  billboard_soup.find_all('div', {'data-content-type': 'yearEndChart'})
@@ -68,27 +72,41 @@ def data(row):
         artistName = article_chart[0].find_all('h2', {'class':'ye-chart__item-subtitle'})[0].text.strip()
         p.append((artistName, songTitle))
     return p
+# -- End of Puyush's functions --
 
+# Gets the top 100 songs from Billboard of the input year
 def get_top100(int_year):
     pairs = list()
     top100Songs = list()
-    pairs = [data(d) for d in update_url(int_year)]
+    pairs = [data(d) for d in update_bbd_url(int_year)]
     for p in pairs:
         top100Songs += p
     return top100Songs
 
+# Converts the top 100 songs in a particular year into
+# a searchable string
 def get_top100_query(int_year):
     top100 = get_top100(int_year)
-    result = [pair[1].lower()+' '+pair[0].lower().replace('(','').replace(')','').replace('featuring','').replace('&','') for pair in top100]
+    result = [clean_name(pair[1])+' '+clean_name(pair[0]) for pair in top100]
     return result
 
+# Clean up both artist name and song titles from get_top100() list
+def clean_name(str_input):
+    return str_input.lower().replace('(','').replace(')','').replace('featuring','').replace('&','')
 
-# In[331]:
+# Generates a search result page based on the input
+# The url can be both a list of different versions of chords
+# or "No Result" page
+def search_url(str_query):
+    root = 'https://www.ultimate-guitar.com/search.php?search_type=title&order=&value='
+    str_query = str_query.replace(' ', '+')
+    return root+str_query
 
-hello = 'https://www.ultimate-guitar.com/search.php?search_type=title&order=&value=hello+adele'
-feel_coming = 'https://www.ultimate-guitar.com/search.php?search_type=title&order=&value=i+feel+it+coming'
-sorry = 'https://www.ultimate-guitar.com/search.php?search_type=title&order=&value=sorry+justin+bieber'
-search_soup = soup_page(sorry)
+
+# In[392]:
+
+feel_coming = 'https://www.ultimate-guitar.com/search.php?search_type=title&order=&value=i+feel+it+coming+the+weekend'
+search_soup = soup_page(feel_coming)
 table = search_soup.find_all('table',{'class':'tresults'})[0]
 
 
@@ -103,14 +121,4 @@ for row in rows:
     if get_type(row) == 'chords':
         if (get_rating(row) != None):
             print(get_rating(row),"\t", get_url(row))
-
-
-# In[364]:
-
-get_top100_query(2016)
-
-
-# In[ ]:
-
-
 
