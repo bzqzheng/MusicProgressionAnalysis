@@ -13,7 +13,7 @@ weekend = requests.get('https://www.ultimate-guitar.com/search.php?search_type=t
 weekend_soup = bs4.BeautifulSoup(weekend.content, 'html.parser')
 
 
-# In[391]:
+# In[427]:
 
 # Returns the Beautifulsoup of the input 'web_url'
 def soup_page(web_url):
@@ -29,6 +29,14 @@ def get_chords(web_url):
     chords_list = [word.replace('<span>', '').replace('</span>', '') for word in str(content).split() if word[0:6] == '<span>']
     return chords_list
 
+# Returns the table of different versions from the search page
+def get_table(soup_result):
+    return soup_result.find_all('table', {'class':'tresults'})[0]
+
+# Returns a list of rows
+def get_rows(soup_result):
+    return get_table(soup_result).find_all('tr')[1:len(get_table(soup_result))]
+
 # Returns the rating of a certain row in the ultimate guitar result page
 def get_rating(row):
     temp_rate = row.find('td', {'class':'gray4 tresults--rating'})
@@ -39,14 +47,46 @@ def get_rating(row):
 
 # Returns the type of a certain row in a result page
 def get_type(row):
-    row_type = row.find_all('strong')[0].text.strip()
-    return row_type
+    row_type_list = row.find_all('strong')
+    if (len(row_type_list) > 0):
+        row_type = row_type_list[0].text.strip()
+        return row_type
 
 # Return the url of a certain row (version) of chords in a result page
 def get_url(row):
     search_version = row.find_all('td',{'class':'search-version--td'})[0]
     href = search_version.find_all('a')[0].attrs['href']
     return href
+
+# Gets the top 100 songs from Billboard of the input year
+def get_top100(int_year):
+    pairs = list()
+    top100Songs = list()
+    pairs = [data(d) for d in update_bbd_url(int_year)]
+    for p in pairs:
+        top100Songs += p
+    return top100Songs
+
+# Converts the top 100 songs in a particular year into
+# a searchable string
+def get_top100_query(int_year):
+    if (int_year > 2016): int_year = 2016
+    elif (int_year < 2006): int_year = 2006
+    top100 = get_top100(int_year)
+    result = [clean_name(pair[1])+' '+clean_name(pair[0]) for pair in top100]
+    return result
+
+# Clean up both artist name and song titles from get_top100() list
+def clean_name(str_input):
+    return str_input.lower().replace('(','').replace(')','').replace('&','').split('featuring',1)[0]
+
+# Generates a search result page based on the input
+# The url can be both a list of different versions of chords
+# or "No Result" page
+def search_url(str_query):
+    root = 'https://www.ultimate-guitar.com/search.php?search_type=title&order=&value='
+    str_query = str_query.replace(' ', '+')
+    return root+str_query
 
 # -- Puyush's functions --
 def get_bbd_year_url(year_input):
@@ -74,34 +114,6 @@ def data(row):
     return p
 # -- End of Puyush's functions --
 
-# Gets the top 100 songs from Billboard of the input year
-def get_top100(int_year):
-    pairs = list()
-    top100Songs = list()
-    pairs = [data(d) for d in update_bbd_url(int_year)]
-    for p in pairs:
-        top100Songs += p
-    return top100Songs
-
-# Converts the top 100 songs in a particular year into
-# a searchable string
-def get_top100_query(int_year):
-    top100 = get_top100(int_year)
-    result = [clean_name(pair[1])+' '+clean_name(pair[0]) for pair in top100]
-    return result
-
-# Clean up both artist name and song titles from get_top100() list
-def clean_name(str_input):
-    return str_input.lower().replace('(','').replace(')','').replace('featuring','').replace('&','')
-
-# Generates a search result page based on the input
-# The url can be both a list of different versions of chords
-# or "No Result" page
-def search_url(str_query):
-    root = 'https://www.ultimate-guitar.com/search.php?search_type=title&order=&value='
-    str_query = str_query.replace(' ', '+')
-    return root+str_query
-
 
 # In[392]:
 
@@ -115,10 +127,28 @@ table = search_soup.find_all('table',{'class':'tresults'})[0]
 rows = table.find_all('tr')[1:len(table)]
 
 
-# In[334]:
+# In[395]:
 
 for row in rows:
     if get_type(row) == 'chords':
         if (get_rating(row) != None):
             print(get_rating(row),"\t", get_url(row))
+
+
+# In[428]:
+
+query_list = get_top100_query(2016)[0:3]
+for pair in query_list:
+    pair_url = search_url(pair)
+    pair_soup = soup_page(pair_url)
+    rows = get_rows(pair_soup)
+    print(pair)
+    for row in rows:
+        if get_type(row) == 'chords':
+            print('\t' + get_rating(row) + ' ' + get_url(row))
+
+
+# In[ ]:
+
+
 
