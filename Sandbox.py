@@ -1,19 +1,14 @@
 
 # coding: utf-8
 
-# In[51]:
+# In[456]:
 
 import bs4
 import requests
+import pandas
 
 
-# In[151]:
-
-weekend = requests.get('https://www.ultimate-guitar.com/search.php?search_type=title&order=&value=I+feel+it+coming')
-weekend_soup = bs4.BeautifulSoup(weekend.content, 'html.parser')
-
-
-# In[427]:
+# In[452]:
 
 # Returns the Beautifulsoup of the input 'web_url'
 def soup_page(web_url):
@@ -28,6 +23,12 @@ def get_chords(web_url):
     content = req_soup.find_all('pre', {'class':'js-tab-content'})
     chords_list = [word.replace('<span>', '').replace('</span>', '') for word in str(content).split() if word[0:6] == '<span>']
     return chords_list
+
+# Check whether a certain query has any result on ultimate guitar
+# return false if there is at least one result, true otherwise
+def check_no_result(soup_result):
+    not_found = soup_result.find_all('div',{'class':'not_found'})
+    return len(not_found) != 0
 
 # Returns the table of different versions from the search page
 def get_table(soup_result):
@@ -73,8 +74,11 @@ def get_top100_query(int_year):
     if (int_year > 2016): int_year = 2016
     elif (int_year < 2006): int_year = 2006
     top100 = get_top100(int_year)
-    result = [clean_name(pair[1])+' '+clean_name(pair[0]) for pair in top100]
+    result = [clean_pair(pair) for pair in top100]
     return result
+
+def clean_pair(pair):
+    return clean_name(pair[0]) + ' ' + clean_name(pair[1])
 
 # Clean up both artist name and song titles from get_top100() list
 def clean_name(str_input):
@@ -115,37 +119,93 @@ def data(row):
 # -- End of Puyush's functions --
 
 
-# In[392]:
+# In[450]:
 
-feel_coming = 'https://www.ultimate-guitar.com/search.php?search_type=title&order=&value=i+feel+it+coming+the+weekend'
-search_soup = soup_page(feel_coming)
-table = search_soup.find_all('table',{'class':'tresults'})[0]
-
-
-# In[332]:
-
-rows = table.find_all('tr')[1:len(table)]
-
-
-# In[395]:
-
-for row in rows:
-    if get_type(row) == 'chords':
-        if (get_rating(row) != None):
-            print(get_rating(row),"\t", get_url(row))
-
-
-# In[428]:
-
-query_list = get_top100_query(2016)[0:3]
+query_list = get_top100_query(2016)
 for pair in query_list:
-    pair_url = search_url(pair)
-    pair_soup = soup_page(pair_url)
-    rows = get_rows(pair_soup)
-    print(pair)
-    for row in rows:
-        if get_type(row) == 'chords':
-            print('\t' + get_rating(row) + ' ' + get_url(row))
+    pair_soup = soup_page(search_url(pair))
+    if (not check_no_result(pair_soup)):
+        rows = get_rows(pair_soup)
+        print(pair)
+        for row in rows:
+            row_type = get_type(row)
+            row_rating = get_rating(row)
+            if row_type == 'chords' and row_rating != None:
+                print('\t' + str(get_rating(row)) + ' ' + get_url(row))
+
+
+# In[461]:
+
+top_list = get_top100(2016)
+total = pandas.DataFrame(columns=('artist','title','rating','link'))
+
+
+# In[463]:
+
+total_list = list()
+for pair in query_list:
+    pair_soup = soup_page(search_url(pair))
+    if (not check_no_result(pair_soup)):
+        pair_list = list()
+        rows = get_rows(pair_soup)
+        pair_list.append(pair)
+        for row in rows:
+            row_type = get_type(row)
+            row_rating = get_rating(row)
+            if row_type == 'chords' and row_rating != None:
+#                 print('\t' + str(get_rating(row)) + ' ' + get_url(row))
+                pair_list.append(str(get_rating(row)))
+                pair_list.append(str(get_url(row)))
+        total_list.append(pair_list)
+
+
+# In[465]:
+
+kk = pandas.DataFrame(total_list)
+
+
+# In[466]:
+
+kk
+
+
+# In[483]:
+
+top_list = get_top100(2016)[0:5]
+total = pandas.DataFrame(columns=('artist','title','rating','link'))
+total_list = list();
+for pair in top_list:
+    query_pair = clean_pair(pair)
+    pair_soup = soup_page(search_url(query_pair))
+    if (not check_no_result(pair_soup)):
+        rows = get_rows(pair_soup)
+        temp_list = list()
+        for row in rows:
+            row_type = get_type(row)
+            row_rating = get_rating(row)
+            if row_type == 'chords' and row_rating != None:
+                temp_list.append(pair[0])
+                temp_list.append(pair[1])
+                temp_list.append(row_rating)
+                temp_list.append(str(get_url(row)))
+                temp_list.sort_values(temp_list[2])
+    total_list.append(temp_list)
+
+
+# In[484]:
+
+total_list
+
+
+# In[485]:
+
+cc = pandas.DataFrame(total_list)
+cc
+
+
+# In[ ]:
+
+
 
 
 # In[ ]:
