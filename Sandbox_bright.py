@@ -1,12 +1,13 @@
 
 # coding: utf-8
 
-# In[32]:
+# In[57]:
 
 import bs4
 import requests
 import pandas
 pandas.set_option('display.max_rows',100)
+pandas.set_option('display.max_columns',1000)
 
 
 # In[42]:
@@ -121,12 +122,12 @@ def data(row):
 # -- End of Puyush's functions --
 
 
-# In[28]:
+# In[55]:
 
-top_list = get_top100(2015)
+top_list = get_top100(2015)[0:10]
 
 
-# In[29]:
+# In[59]:
 
 result_list_2015 = list()
 for song in top_list:
@@ -141,20 +142,27 @@ for song in top_list:
             if get_type(row).lower() == 'chords' and get_rating(row) != None and get_rating(row) > max_rating:
                 max_rating = get_rating(row)
                 max_url = get_url(row)
-        if (max_rating != 0):
-            tt = (song[0], song[1], max_rating, max_url)
+        if (max_url != "" and max_rating != 0):
+            chord_list = get_chords(max_url)
+            chord_str = ' '.join(chord_list)
+            tt = [song[0], song[1], max_rating, max_url, chord_str]
             result_list_2015.append(tt)
 
-result_df = pandas.DataFrame(result_list_2015, columns=['artist', 'title', 'rating', 'url'])
+result_df = pandas.DataFrame(result_list_2015, columns=['artist', 'title', 'rating', 'url', 'chords'])
 
 
-# In[35]:
+# In[61]:
 
-test_query = get_top100_query(2016)[0:2]
+result_df.chords[0]
+
+
+# In[45]:
+
+test_query = get_top100_query(2016)[0:10]
 test_query
 
 
-# In[43]:
+# In[48]:
 
 for query in test_query:
     query_url = search_url(query)
@@ -167,9 +175,10 @@ for query in test_query:
             if get_type(row).lower() == 'chords' and get_rating(row) != None and get_rating(row) > max_rating:
                 max_rating = get_rating(row)
                 max_url = get_url(row)
-        print(max_url)
-        chord_list = get_chords(max_url)
-        print(chord_list)
+        if (max_url != "" and max_rating != 0):
+            print(max_url)
+            chord_list = get_chords(max_url)
+            print(chord_list)
 
 
 # In[ ]:
