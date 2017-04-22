@@ -1,14 +1,15 @@
 
 # coding: utf-8
 
-# In[1]:
+# In[32]:
 
 import bs4
 import requests
 import pandas
+pandas.set_option('display.max_rows',100)
 
 
-# In[2]:
+# In[42]:
 
 # Returns the Beautifulsoup of the input 'web_url'
 def soup_page(web_url):
@@ -21,7 +22,7 @@ def soup_page(web_url):
 def get_chords(web_url):
     req_soup = soup_page(web_url)
     content = req_soup.find_all('pre', {'class':'js-tab-content'})
-    chords_list = [word.replace('<span>', '').replace('</span>', '') for word in str(content).split() if word[0:6] == '<span>']
+    chords_list = [word.replace('<span>', '').replace('</span>', '').replace('</pre>]', '') for word in str(content).split() if word[0:6] == '<span>']
     return chords_list
 
 # Check whether a certain query has any result on ultimate guitar
@@ -120,14 +121,16 @@ def data(row):
 # -- End of Puyush's functions --
 
 
-# In[3]:
+# In[28]:
 
-query_list = get_top100_query(2015)
+top_list = get_top100(2015)
 
 
-# In[4]:
+# In[29]:
 
-for query in query_list:
+result_list_2015 = list()
+for song in top_list:
+    query = clean_pair(song)
     search_result_url = search_url(query)
     search_result_soup = soup_page(search_result_url)
     if (not check_no_result(search_result_soup)):
@@ -139,8 +142,39 @@ for query in query_list:
                 max_rating = get_rating(row)
                 max_url = get_url(row)
         if (max_rating != 0):
-            print(query, " ", max_rating)
-            print(max_url)
+            tt = (song[0], song[1], max_rating, max_url)
+            result_list_2015.append(tt)
+
+result_df = pandas.DataFrame(result_list_2015, columns=['artist', 'title', 'rating', 'url'])
+
+
+# In[35]:
+
+test_query = get_top100_query(2016)[0:2]
+test_query
+
+
+# In[43]:
+
+for query in test_query:
+    query_url = search_url(query)
+    soup = soup_page(query_url)
+    if (not check_no_result(soup)):
+        rows = get_rows(soup)
+        max_rating = 0
+        max_url = ""
+        for row in rows:
+            if get_type(row).lower() == 'chords' and get_rating(row) != None and get_rating(row) > max_rating:
+                max_rating = get_rating(row)
+                max_url = get_url(row)
+        print(max_url)
+        chord_list = get_chords(max_url)
+        print(chord_list)
+
+
+# In[ ]:
+
+
 
 
 # In[ ]:
