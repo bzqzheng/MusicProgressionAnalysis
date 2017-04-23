@@ -1,45 +1,40 @@
 
 # coding: utf-8
 
-# In[1]:
+# In[56]:
 
 import pandas
 pandas.set_option('display.max_rows',1000)
 pandas.set_option('display.max_columns',10000)
 
 
-# In[2]:
+# In[57]:
 
-m2016 = pandas.read_csv('music2016.csv').drop
+m2016 = pandas.read_csv('music2016.csv')
+m2016 = m2016.drop(m2016.columns[0], axis=1)
 m2016
 
 
-# In[11]:
+# In[58]:
 
 m2016['chord_set'] = [set(chords.split(' ')) for chords in m2016.chords]
+cd_2016_set = set().union(*m2016.chord_set)
 
 
-# In[22]:
+# In[59]:
 
-m2016.chord_set[0].union(m2016.chord_set[1])
-
-
-# In[23]:
-
-m2016.chord_set[0]
+cd_2016_set
 
 
-# In[24]:
+# In[80]:
 
-m2016.chord_set[1]
-
-
-# In[26]:
-
-vocab = m2016.chord_set[0]
-for ss in m2016.chord_set:
-    print(type(ss))
-vocab
+chord_pair = list()
+for chords in m2016.chords:
+    cd_list = chords.split(' ')
+    for index in range(0,len(cd_list)-1):
+        temp_str = str(cd_list[index] + ' ' + cd_list[index+1])
+        chord_pair.append(temp_str)
+set(chord_pair)
 
 
 # In[ ]:
