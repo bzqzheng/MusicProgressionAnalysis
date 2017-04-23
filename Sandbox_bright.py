@@ -10,7 +10,7 @@ pandas.set_option('display.max_rows',100)
 pandas.set_option('display.max_columns',1000)
 
 
-# In[42]:
+# In[74]:
 
 # Returns the Beautifulsoup of the input 'web_url'
 def soup_page(web_url):
@@ -121,13 +121,37 @@ def data(row):
     return p
 # -- End of Puyush's functions --
 
+def get_year_dataframe(int_year):
+    top_list = get_top100(int_year)
+    result_list = list()
+    for song in top_list:
+        query = clean_pair(song)
+        result_url = search_url(query)
+        result_soup = soup_page(result_url)
+        if (not check_no_result(result_soup)):
+            rows = get_rows(result_soup)
+            max_rating = 0
+            max_url = ""
+            for row in rows:
+                row_rating = get_rating(row)
+                if get_type(row).lower() == 'chords' and row_rating != None and row_rating > max_rating:
+                    max_rating = row_rating
+                    max_url = get_url(row)
+            if (max_url != "" and max_rating > 0):
+                chord_list = get_chords(max_url)
+                chord_str = ' '.join(chord_list)
+                tt = [song[0], song[1], max_rating, max_url, chord_str]
+                result_list.append(tt)
+    result = pandas.DataFrame(result_list, columns=['artist', 'title', 'rating', 'url', 'chords'])
+    return result
 
-# In[55]:
 
-top_list = get_top100(2015)[0:10]
+# In[63]:
+
+top_list = get_top100(2015)[0:20]
 
 
-# In[59]:
+# In[64]:
 
 result_list_2015 = list()
 for song in top_list:
@@ -151,39 +175,9 @@ for song in top_list:
 result_df = pandas.DataFrame(result_list_2015, columns=['artist', 'title', 'rating', 'url', 'chords'])
 
 
-# In[61]:
+# In[75]:
 
-result_df.chords[0]
-
-
-# In[45]:
-
-test_query = get_top100_query(2016)[0:10]
-test_query
-
-
-# In[48]:
-
-for query in test_query:
-    query_url = search_url(query)
-    soup = soup_page(query_url)
-    if (not check_no_result(soup)):
-        rows = get_rows(soup)
-        max_rating = 0
-        max_url = ""
-        for row in rows:
-            if get_type(row).lower() == 'chords' and get_rating(row) != None and get_rating(row) > max_rating:
-                max_rating = get_rating(row)
-                max_url = get_url(row)
-        if (max_url != "" and max_rating != 0):
-            print(max_url)
-            chord_list = get_chords(max_url)
-            print(chord_list)
-
-
-# In[ ]:
-
-
+get_year_dataframe(2016)
 
 
 # In[ ]:
