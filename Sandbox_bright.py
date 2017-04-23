@@ -6,11 +6,11 @@
 import bs4
 import requests
 import pandas
-pandas.set_option('display.max_rows',100)
-pandas.set_option('display.max_columns',1000)
+pandas.set_option('display.max_rows',1000)
+pandas.set_option('display.max_columns',10000)
 
 
-# In[74]:
+# In[85]:
 
 # Returns the Beautifulsoup of the input 'web_url'
 def soup_page(web_url):
@@ -43,10 +43,12 @@ def get_rows(soup_result):
 # Returns the rating of a certain row in the ultimate guitar result page
 def get_rating(row):
     temp_rate = row.find('td', {'class':'gray4 tresults--rating'})
-    rate_list = temp_rate.find_all('b', {'class':'ratdig'})
-    if (len(rate_list) > 0):
-        rate = rate_list[0].text.strip()
-        return float(rate)
+    if (temp_rate != None):
+        rate_list = temp_rate.find_all('b', {'class':'ratdig'})
+        if (len(rate_list) > 0):
+            rate = rate_list[0].text.strip()
+            return float(rate)
+    return 0
 
 # Returns the type of a certain row in a result page
 def get_type(row):
@@ -134,7 +136,8 @@ def get_year_dataframe(int_year):
             max_url = ""
             for row in rows:
                 row_rating = get_rating(row)
-                if get_type(row).lower() == 'chords' and row_rating != None and row_rating > max_rating:
+                row_type = get_type(row)
+                if row_type != None and row_type.lower() == 'chords' and row_rating != None and row_rating > max_rating:
                     max_rating = row_rating
                     max_url = get_url(row)
             if (max_url != "" and max_rating > 0):
@@ -148,7 +151,7 @@ def get_year_dataframe(int_year):
 
 # In[63]:
 
-top_list = get_top100(2015)[0:20]
+top_list = get_top100(2015)[0:10]
 
 
 # In[64]:
@@ -178,6 +181,29 @@ result_df = pandas.DataFrame(result_list_2015, columns=['artist', 'title', 'rati
 # In[75]:
 
 get_year_dataframe(2016)
+
+
+# In[76]:
+
+result_df.chords[0]
+
+
+# In[77]:
+
+result_df.chords[1]
+
+
+# In[81]:
+
+def csv_name_gen(int_year):
+    name = 'music' + str(int_year) + '.csv'
+    return name
+
+
+# In[86]:
+
+for year in range(2009, 2010):
+    get_year_dataframe(year).to_csv(csv_name_gen(year))
 
 
 # In[ ]:
