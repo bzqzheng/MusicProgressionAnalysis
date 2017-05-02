@@ -1,15 +1,17 @@
 
 # coding: utf-8
 
-# In[276]:
+# In[327]:
 
 import pandas
 pandas.set_option('display.max_rows',1000)
 pandas.set_option('display.max_columns',10000)
 import math
+import matplotlib
+import matplotlib.pyplot as plt 
 
 
-# In[277]:
+# In[328]:
 
 def clean_dict_func(input_dict):
     return dict((k, v) for k, v in input_dict.items() if not (type(k) == float and math.isnan(k)))
@@ -46,28 +48,33 @@ def get_year_dict(int_year):
     return temp_df
 
 
-# In[278]:
+# In[329]:
 
-final_df = get_year_dict(2016)
+final_df = get_year_dict(2006)
 
 
-# In[279]:
+# In[330]:
 
-for i in range(2006, 2016):
+for i in range(2007, 2017):
     final_df = final_df.join(get_year_dict(i))
 
 
-# In[282]:
+# In[331]:
 
 final_df = final_df.fillna(0)
 
 
-# In[283]:
+# In[332]:
 
-import 
+final_df['chord_pair'] = final_df.index
 
+
+# In[333]:
+
+ax = pandas.tools.plotting.parallel_coordinates(final_df, 'chord_pair')
+ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.05),
+          fancybox=True, shadow=True, ncol=5)
+ax.figure.set_size_inches(15,6)
 
 # In[ ]:
-
-
 
